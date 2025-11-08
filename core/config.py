@@ -13,13 +13,19 @@ class NotebookConfig:
     export_json: bool = True
     json_output_file: str = "agent_notebook_cells.json"
 
+    context_max_cells: int = 5
+    include_code_in_context: bool = True
+    include_markdown_in_context: bool = True
+    include_outputs_in_context: bool = True
+    add_timestamp: bool = True
+
 @dataclass
 class DeepSeekConfig:
     api_key: str = ""
     base_url: str = "https://api.deepseek.com"
     model: str = "deepseek-chat"
     temperature: float = 0.7
-    max_tokens: int = 2000
+    max_tokens: int = 1000000
 
 @dataclass
 class AgentConfig:

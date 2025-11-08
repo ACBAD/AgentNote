@@ -69,9 +69,7 @@ def print_help():
 - quit/exit: 退出程序
 
 示例任务:
-- "分析当前目录下的CSV文件并生成可视化报告"
-- "读取DOT文件并创建网络图可视化"
-- "进行数据清洗和统计分析"
+- "加载和分析本地的test.dot，并用networkx可视化"
     """
     print(help_text)
 

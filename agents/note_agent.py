@@ -1,6 +1,7 @@
 import time
 import yaml
 import os
+import nbformat as nbf
 from typing import List, Dict, Any, Optional
 from ..core.config import config
 from ..core.deepseek_client import DeepSeekClient
@@ -11,13 +12,12 @@ from ..core.notebook_exporter import NotebookExporter
 
 class NoteAgent:
     """NoteAgent智能体 - 自动化任务执行和Notebook生成"""
-    
     def __init__(self, api_key: str = None):
-        # 初始化组件
+        # 初始化组件 - 先创建NotebookManager，再传递给Executor
+        self.manager = NotebookManager()
         self.client = DeepSeekClient(api_key)
         self.parser = ContentParser()
-        self.manager = NotebookManager()
-        self.executor = NotebookExecutor()
+        self.executor = NotebookExecutor(self.manager)
         self.exporter = NotebookExporter()
         
         # 加载提示词
@@ -28,6 +28,10 @@ class NoteAgent:
         self.execution_plan = []
         self.current_step = 0
         self.execution_history = []
+        self.last_error = None
+        
+        # 初始化notebook
+        self.nb = self.manager.initialize_notebook()
     
     def _load_prompts(self) -> Dict[str, Any]:
         """加载提示词模板"""
@@ -45,6 +49,22 @@ class NoteAgent:
             template = self.prompts[category][key]
             return template.format(**kwargs)
         return ""
+    
+    def _format_plan_as_markdown(self, steps: List[Dict[str, str]]) -> str:
+        """将规划步骤格式化为markdown"""
+        markdown = "## 📋 任务执行计划\n\n"
+        markdown += f"**任务描述**: {self.current_task}\n\n"
+        markdown += "### 执行步骤\n\n"
+        
+        for i, step in enumerate(steps, 1):
+            markdown += f"#### 🔹 步骤 {i}: {step.get('name', '未命名步骤')}\n"
+            markdown += f"- **描述**: {step.get('description', '无描述')}\n"
+            markdown += f"- **预期输出**: {step.get('expected_output', '无预期输出')}\n\n"
+        
+        markdown += f"**总计**: {len(steps)} 个步骤\n"
+        markdown += f"**规划时间**: {time.strftime('%Y-%m-%d %H:%M:%S')}\n"
+        
+        return markdown
     
     def plan_task(self, task_description: str) -> List[Dict[str, str]]:
         """任务规划"""
@@ -65,9 +85,34 @@ class NoteAgent:
         self.current_task = task_description
         self.current_step = 0
         
+        # 将规划结果添加到notebook中
+        if steps:
+            plan_markdown = self._format_plan_as_markdown(steps)
+            self.nb = self.manager.load_notebook()
+            self.manager.add_markdown_cell(self.nb, plan_markdown)
+        
         print(f"任务规划完成，共 {len(steps)} 个步骤")
         return steps
     
+    def _print_formatted_steps(self, steps: List[Dict[str, str]]):
+        """格式化打印任务步骤"""
+        print("\n" + "="*80)
+        print("📋 任务执行计划")
+        print("="*80)
+        
+        for i, step in enumerate(steps, 1):
+            print(f"\n🔹 步骤 {i}: {step.get('name', '未命名步骤')}")
+            print(f"   📝 描述: {step.get('description', '无描述')}")
+            print(f"   ✅ 预期输出: {step.get('expected_output', '无预期输出')}")
+            
+            # 添加分隔线，除了最后一步
+            if i < len(steps):
+                print("   " + "-" * 60)
+        
+        print("\n" + "="*80)
+        print(f"总计: {len(steps)} 个步骤")
+        print("="*80 + "\n")
+
     def _parse_planning_steps(self, plan_content: str) -> List[Dict[str, str]]:
         """解析规划步骤"""
         steps = []
@@ -106,17 +151,17 @@ class NoteAgent:
         step = self.execution_plan[step_index]
         print(f"执行步骤 {step_index + 1}: {step['name']}")
         
-        # 加载当前notebook
-        nb = self.manager.load_notebook()
+        # 确保使用当前的notebook实例
+        self.nb = self.manager.load_notebook()
         
         # 添加上下文信息
         context = self._build_context(step_index)
         
         # 生成步骤说明
-        self._add_step_description(nb, step, step_index)
+        self._add_step_description(step, step_index)
         
         # 生成和执行代码
-        success = self._generate_and_execute_code(nb, step, context, step_index)
+        success = self._generate_and_execute_code(step, context, step_index)
         
         if success:
             self.current_step = step_index + 1
@@ -145,19 +190,23 @@ class NoteAgent:
             for i in range(step_index):
                 context += f"- {self.execution_plan[i]['name']}\n"
         
+        # 添加notebook上下文
+        notebook_context = self.manager.get_notebook_context(self.nb)
+        context += f"\n{notebook_context}"
+        
         return context
     
-    def _add_step_description(self, nb, step: Dict[str, str], step_index: int):
+    def _add_step_description(self, step: Dict[str, str], step_index: int):
         """添加步骤描述到notebook"""
         markdown_content = f"## 步骤 {step_index + 1}: {step['name']}\n\n"
         markdown_content += f"**描述**: {step['description']}\n\n"
         markdown_content += f"**预期输出**: {step['expected_output']}\n\n"
         markdown_content += f"**执行时间**: {time.strftime('%Y-%m-%d %H:%M:%S')}\n"
         
-        self.manager.add_markdown_cell(nb, markdown_content)
+        self.manager.add_markdown_cell(self.nb, markdown_content)
     
-    def _generate_and_execute_code(self, nb, step: Dict[str, str], context: str, step_index: int) -> bool:
-        """生成和执行代码"""
+    def _generate_and_execute_code(self, step: Dict[str, str], context: str, step_index: int) -> bool:
+        """生成和执行代码 - 修改：即使执行失败也保留代码cell"""
         max_retries = config.agent.max_retries
         
         for attempt in range(max_retries):
@@ -166,20 +215,25 @@ class NoteAgent:
             # 生成代码
             code_success, markdown_content, python_code = self._generate_code(step, context, attempt)
             if not code_success:
+                print("代码生成失败，继续重试...")
                 continue
             
             # 添加生成的代码到notebook
             if markdown_content:
-                self.manager.add_markdown_cell(nb, markdown_content)
+                self.manager.add_markdown_cell(self.nb, markdown_content)
             
             if python_code:
-                code_cell = self.manager.add_code_cell(nb, python_code)
+                # 总是添加代码cell到notebook，即使执行失败也要保留
+                code_cell = self.manager.add_code_cell(self.nb, python_code)
                 
                 # 执行代码
                 if config.agent.enable_execution:
-                    execution_success = self._execute_and_verify(nb, step_index, attempt)
+                    execution_success = self._execute_and_verify(step_index, attempt)
                     if execution_success:
                         return True
+                    else:
+                        # 执行失败时，保留代码cell作为上下文
+                        print(f"代码执行失败，准备重试... (剩余重试次数: {max_retries - attempt - 1})")
                 else:
                     return True  # 如果不执行代码，直接返回成功
         
@@ -187,18 +241,21 @@ class NoteAgent:
         return False
     
     def _generate_code(self, step: Dict[str, str], context: str, attempt: int) -> tuple:
-        """生成代码内容"""
         system_prompt = self._get_prompt('system_prompts', 'code_generator')
-        user_prompt = self._get_prompt('task_prompts', 'code_generation',
-                                     step_description=step['description'],
-                                     context=context)
+        
+        # 增强用户提示词，明确说明要参考前面的内容
+        enhanced_user_prompt = self._get_prompt('task_prompts', 'code_generation',
+                                            step_description=step['description'],
+                                            context=context)
+        
+        # 添加明确的指导，要求参考前面的代码
+        enhanced_user_prompt += "\n\n重要：请参考上面提供的已生成Notebook内容，确保代码的连贯性和一致性。可以利用前面cell中定义过的变量、函数或导入的模块。"
         
         # 如果是重试，添加错误信息
-        if attempt > 0:
-            last_error = self.execution_history[-1].get('last_error', '未知错误')
-            user_prompt += f"\n\n之前的执行错误: {last_error}\n请修复这个错误。"
+        if attempt > 0 and hasattr(self, 'last_error') and self.last_error:
+            enhanced_user_prompt += f"\n\n之前的执行错误: {self.last_error}\n请修复这个错误。"
         
-        content = self.client.generate_with_retry(system_prompt, user_prompt)
+        content = self.client.generate_with_retry(system_prompt, enhanced_user_prompt)
         if not content:
             return False, "", ""
         
@@ -214,45 +271,65 @@ class NoteAgent:
                 return False, "", ""
         
         return True, markdown_content, python_code
-    
-    def _execute_and_verify(self, nb, step_index: int, attempt: int) -> bool:
+
+    def _execute_and_verify(self, step_index: int, attempt: int) -> bool:
         """执行代码并验证结果"""
         print("执行代码...")
         
-        # 执行最后一个cell（新添加的代码cell）
-        nb = self.executor.execute_last_cell(nb)
+        # 获取最后一个cell的代码
+        if not self.nb.cells:
+            print("没有找到可执行的代码cell")
+            return False
         
-        # 获取执行结果
-        last_cell_output = self.manager.get_last_cell_output(nb)
+        last_cell = self.nb.cells[-1]
+        if last_cell.cell_type != 'code':
+            print("最后一个cell不是代码cell")
+            return False
         
-        # 检查执行错误
-        if last_cell_output and self.parser.contains_execution_errors(last_cell_output):
-            error_message = self.parser.get_error_message(last_cell_output)
-            print(f"代码执行错误: {error_message}")
+        code_to_execute = last_cell.source
+        
+        # 执行代码
+        execution_result = self.manager.execute_cell_safely(self.executor, code_to_execute, len(self.nb.cells)-1)
+        
+        if execution_result.get('success'):
+            print("✅ 代码执行成功")
             
-            # 记录错误信息用于重试
-            if self.execution_history:
-                self.execution_history[-1]['last_error'] = error_message
+            # 重新加载notebook以获取最新的执行结果
+            self.nb = self.manager.load_notebook()
+            
+            # 清除错误记录
+            self.last_error = None
+            return True
+        else:
+            error_message = execution_result.get('error', '未知错误')
+            output = execution_result.get('output', '')
+            
+            print(f"❌ 代码执行失败: {error_message}")
+            if output:
+                print(f"输出: {output}")
+            
+            # 保存错误信息用于重试
+            self.last_error = f"{error_message}\n输出: {output}"
             
             return False
         
-        print("代码执行成功")
-        return True
-    
     def run_task(self, task_description: str) -> bool:
         """运行完整任务"""
         print(f"开始执行任务: {task_description}")
         
+        # 初始化notebook
+        self.nb = self.manager.load_notebook()
+        self.manager.add_markdown_cell(self.nb, f"# 任务: {task_description}\n\n开始时间: {time.strftime('%Y-%m-%d %H:%M:%S')}")
+        
         # 任务规划
         steps = self.plan_task(task_description)
+
+        self._print_formatted_steps(steps)
+        
         if not steps:
             print("任务规划失败")
             return False
-        
-        # 初始化notebook
-        nb = self.manager.load_notebook()
-        self.manager.add_markdown_cell(nb, f"# 任务: {task_description}\n\n开始时间: {time.strftime('%Y-%m-%d %H:%M:%S')}")
-        
+
         # 按顺序执行步骤
         for i in range(len(steps)):
             success = self.execute_step(i)
@@ -266,14 +343,14 @@ class NoteAgent:
                 return False
             
             # 清理旧cell
-            nb = self.manager.cleanup_old_cells(nb)
+            self.nb = self.manager.cleanup_old_cells(self.nb)
             
             # 等待间隔
             time.sleep(config.notebook.sleep_interval)
         
         # 添加任务完成标记
-        nb = self.manager.load_notebook()
-        self.manager.add_markdown_cell(nb, f"## 任务完成\n\n完成时间: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n所有步骤执行完毕!")
+        self.nb = self.manager.load_notebook()
+        self.manager.add_markdown_cell(self.nb, f"## 任务完成\n\n完成时间: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n所有步骤执行完毕!")
         
         print("任务执行完成!")
         return True

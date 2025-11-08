@@ -91,4 +91,6 @@ class NotebookExporter:
         notebook_path = notebook_path or config.notebook.notebook_name
         with open(notebook_path, 'w', encoding='utf-8') as f:
             nbf.write(nb, f)
+            f.flush()
+            os.fsync(f.fileno())
         print(f"Notebook已保存: {notebook_path}")

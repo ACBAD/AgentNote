@@ -3,14 +3,25 @@ import os
 from typing import Dict, Any
 from ..core.config import config
 
+from pathlib import Path
+
 def load_config_from_yaml(file_path: str = "config.yaml"):
     """从YAML文件加载配置"""
-    if not os.path.exists(file_path):
-        print(f"配置文件 {file_path} 不存在，使用默认配置")
+    # 使用pathlib处理路径
+    config_path = Path(file_path)
+    
+    # 如果文件不存在，尝试在脚本同目录查找
+    if not config_path.exists():
+        config_path = Path(__file__).parent / file_path
+    
+    print(f"查找配置文件: {config_path.absolute()}")
+    
+    if not config_path.exists():
+        print(f"配置文件 {config_path} 不存在，使用默认配置")
         return
     
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(config_path, 'r', encoding='utf-8') as f:
             config_data = yaml.safe_load(f)
         
         config.update_from_dict(config_data)
