@@ -58,39 +58,41 @@ class NotebookExporter:
             print(f"Notebook文件不存在: {notebook_path}")
             return None
         
-        try:
-            with open(notebook_path, 'r', encoding='utf-8') as f:
-                nb = nbf.read(f, as_version=4)
-            
-            notebook_data = {
-                "export_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "notebook_path": notebook_path,
-                "cells": []
-            }
-            
-            for i, cell in enumerate(nb.cells):
-                cell_data = NotebookExporter.extract_cell_data(cell, i)
-                notebook_data["cells"].append(cell_data)
-            
-            # 如果指定了输出文件，则保存到文件
-            output_file = output_file or config.notebook.json_output_file
-            if output_file:
-                with open(output_file, 'w', encoding='utf-8') as f:
-                    json.dump(notebook_data, f, indent=2, ensure_ascii=False)
-                print(f"Notebook cell数据已导出到: {output_file}")
-            
-            return notebook_data
-            
-        except Exception as e:
-            print(f"导出notebook到JSON时出错: {e}")
-            return None
-    
+        with open(notebook_path, 'r', encoding='utf-8') as f:
+            nb = nbf.read(f, as_version=4)
+        
+        notebook_data = {
+            "export_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "notebook_path": notebook_path,
+            "cells": []
+        }
+        
+        for i, cell in enumerate(nb.cells):
+            cell_data = NotebookExporter.extract_cell_data(cell, i)
+            notebook_data["cells"].append(cell_data)
+        
+        # 如果指定了输出文件，则保存到文件
+        output_file = output_file or config.notebook.json_output_file
+        if output_file:
+            with open(f"environment/{output_file}", 'w', encoding='utf-8') as f:
+                json.dump(notebook_data, f, indent=2, ensure_ascii=False)
+            print(f"Notebook cell数据已导出到: environment/{output_file}")
+        
+        return notebook_data
+        
     @staticmethod
     def save_notebook(nb, notebook_path: str = None):
         """保存notebook到文件"""
         notebook_path = notebook_path or config.notebook.notebook_name
-        with open(notebook_path, 'w', encoding='utf-8') as f:
-            nbf.write(nb, f)
-            f.flush()
-            os.fsync(f.fileno())
-        print(f"Notebook已保存: {notebook_path}")
+        full_path = f"environment/{notebook_path}"
+        
+        try:
+            with open(full_path, 'w', encoding='utf-8') as f:
+                nbf.write(nb, f)
+                f.flush()
+                os.fsync(f.fileno())  # 强制刷新到磁盘
+            print(f"Notebook已保存: {full_path}")
+            return True
+        except Exception as e:
+            print(f"保存notebook失败: {e}")
+            return False

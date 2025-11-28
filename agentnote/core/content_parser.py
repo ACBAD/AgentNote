@@ -46,14 +46,9 @@ class ContentParser:
         if not code:
             return False, "代码为空"
         
-        try:
-            # 尝试编译代码来检查语法
-            compile(code, '<string>', 'exec')
-            return True, "代码语法正确"
-        except SyntaxError as e:
-            return False, f"语法错误: {e}"
-        except Exception as e:
-            return False, f"代码验证错误: {e}"
+        # 尝试编译代码来检查语法
+        compile(code, '<string>', 'exec')
+        return True, "代码语法正确"
     
     @staticmethod
     def extract_imports(code: str) -> list:
@@ -61,38 +56,11 @@ class ContentParser:
         if not code:
             return []
         
-        try:
-            tree = ast.parse(code)
-            imports = []
-            
-            for node in ast.walk(tree):
-                if isinstance(node, (ast.Import, ast.ImportFrom)):
-                    imports.append(ast.unparse(node))
-            
-            return imports
-        except:
-            return []
-    
-    @staticmethod
-    def contains_execution_errors(output_data: dict) -> bool:
-        """检查输出数据中是否包含执行错误"""
-        if not output_data.get("outputs"):
-            return False
+        tree = ast.parse(code)
+        imports = []
         
-        for output in output_data["outputs"]:
-            if output.get("output_type") == "error":
-                return True
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.Import, ast.ImportFrom)):
+                imports.append(ast.unparse(node))
         
-        return False
-    
-    @staticmethod
-    def get_error_message(output_data: dict) -> str:
-        """从输出数据中提取错误信息"""
-        if not output_data.get("outputs"):
-            return ""
-        
-        for output in output_data["outputs"]:
-            if output.get("output_type") == "error":
-                return f"{output.get('ename', '')}: {output.get('evalue', '')}"
-        
-        return ""
+        return imports

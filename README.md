@@ -1,59 +1,84 @@
-# AgentNote: The Notebook Playground for Autonomous Agents
+# AgentNote: OODA-Driven Autonomous Agents for Iterative Notebook-Based Problem Solving
 
-## 🧠 核心理念
+> **Talk is cheap, show me the notebook.**
 
-AgentNote项目致力于打造这样一个工具，在这里AI智能体能够自主探索、实验和学习。与此同时，所有的思考和执行过程，都自动化的沉淀为可以重复执行的notebook，能够有效提升智能体执行决策的可读性、可信性、可复用性。
+## 🧠 Core Philosophy
 
-https://github.com/user-attachments/assets/7690ed25-8b60-428a-a4ad-e1951309a627
+AgentNote implements OODA (Observe-Orient-Decide-Act) loop-driven autonomous agents for iterative problem solving in computational notebook environments. By orchestrating specialized AI agents through cognitive decision-making cycles, AgentNote enables autonomous exploration, analysis, and solution generation while automatically documenting the entire process in executable notebooks.
+
+AgentNote is dedicated to creating a framework where AI agents can autonomously explore, experiment, and learn. Meanwhile, all thinking and execution processes are automatically documented into reproducible notebooks, effectively enhancing the readability, credibility, and reusability of agent decisions and executions.
+
+## 🔬 Core Concepts
+
+#### Circle
+The highest-level execution unit representing a complete OODA iteration. Each circle contains four sequential phases and aims to make progress toward the mission goal through iterative refinement.
+
+**Key Characteristics:**
+- Contains 4 phases: Observe → Orient → Decide → Act
+- Evaluates overall progress after each iteration
+- Supports multiple circles for complex problem decomposition
+
+#### Phase
+The intermediate execution unit representing one of the four OODA stages within a circle. Each phase orchestrates specialized agents to accomplish specific cognitive tasks.
+
+**Phase Types:**
+- **Observe**: Environmental scanning and data collection
+- **Orient**: Information synthesis and pattern recognition  
+- **Decide**: Strategy formulation and decision making
+- **Act**: Plan execution and solution implementation
+
+#### Task
+The fundamental execution unit within each phase, representing specific agent operations. Each phase contains three sequential tasks for comprehensive execution.
+
+**Task Types:**
+- **Commander Task**: Generates specific task descriptions for the phase
+- **Agent Task**: Executes the specialized cognitive work using generated description
+- **Reflection Task**: Evaluates task completion and provides feedback
+
+#### Context
+The shared memory system that maintains state across all execution levels based on persistent notebook cells, enabling continuity and learning across iterations.
+
+**Context Components:**
+- **Mission Context**: Overall goals and constraints
+- **Circle Context**: Progress and insights from current iteration
+- **Phase Context**: Stage-specific information and results
+- **Task Context**: Execution details and error histories
+- **Error Context**: Code execution error messages
+
+## 🎯 Key Features
+
+#### OODA-Driven Multi-Agent Architecture
+- **Observe Agents**: Collect environmental data and self capabilities
+- **Orient Agents**: Analyze and synthesize collected information
+- **Decision Agents**: Formulate strategies and make informed decisions  
+- **Action Agents**: Execute operations guided by decisions.
+- **Commander Agents**: Simulate human experts and coordinate the entire OODA loop process
+
+#### Autonomous Notebook Generation
+- **Iterative Problem Solving**: Multiple OODA cycles for complex problem decomposition
+- **Automatic Documentation**: Complete thought process captured in markdown and code cells
+- **Executable Artifacts**: Generated notebooks are immediately executable and reproducible
+- **Context Preservation**: Maintains state and context across iterative cycles
+
+#### Advanced Capabilities
+- **Intelligent Error Recovery**: Self-correcting mechanisms with contextual retry strategies
+- **Online Reflection**: Continuous assessment of progress and goal achievement
+- **Scalable Architecture**: Modular design supporting extensible agent capabilities
+
+## ⚠️ Safety & Considerations
+Important Security Notice: AgentNote executes AI-generated code in your local environment. Please exercise caution:
+
+🔒 Code Execution: Generated code runs with your user permissions
+🔍 Code Review: Always review generated code before execution in production
+🛡️ Environment Isolation: Recommended to use virtual environments or containers
+
+## 📖 Citation
+Our paper is coming Soon and we're working hard to bring you the full details!
 
 
-## 🛠️ 项目结构
+## 📄 License
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-```
-AgentNote/
-├── README.md                   # 项目说明文档
-├── main.py                     # 程序主入口
-├── __init__.py                 # 根目录包初始化
-│
-├── agents/                     # 智能体核心模块
-│   ├── __init__.py             # 智能体模块初始化
-│   └── note_agent.py           # 主智能体类 - 任务协调和状态管理
-│
-├── core/                       # 核心功能模块
-│   ├── __init__.py             # 核心模块初始化
-│   ├── config.py               # 配置管理 - 全局配置数据类
-│   ├── deepseek_client.py      # DeepSeek API交互
-│   ├── content_parser.py       # 内容解析器 - 代码和文本分离
-│   ├── notebook_manager.py     # Notebook管理器 - 文件操作和上下文管理
-│   ├── notebook_generator.py   # Notebook生成器 - Cell创建和格式化
-│   ├── notebook_exporter.py    # Notebook导出器 - 数据导出和序列化
-│   ├── executor.py             # 执行器 - 代码安全执行和错误处理
-│   └── state_manager.py        # 状态管理器 - 执行状态跟踪
-│
-├── prompts/                    # 提示词模板
-│   └── prompts.yaml            # 智能体提示词配置 - 系统提示词和任务模板
-│
-├── utils/                      # 工具函数
-│   ├── __init__.py             # 工具模块初始化
-│   ├── config_loader.py        # 配置加载器 - YAML配置读写
-│   └── config.yaml             # 主配置文件 - 项目运行参数
-```
+Start your journey in autonomous problem solving with AgentNote! 🚀
 
-# ⚠️ 安全说明
-
-**重要安全提醒**：当前版本的AgentNote在本地环境中直接执行AI生成的代码，**没有采用代码沙箱隔离机制**。这意味着：
-
-- **代码执行具有与当前用户相同的系统权限**
-- **请谨慎运行来自不可信来源的任务描述**
-- **建议在隔离的开发环境或虚拟机中运行**
-
-所以在当前版本中，请确保您理解并信任所执行代码的内容。
-
-## 📄 许可证
-
-本项目将采用 MIT 许可证。
-
-
-**开始您的智能体认知探索之旅吧！** 🚀
-
-*让AI智能体在Notebook的游乐场中自由探索、学习和创造*
+Where intelligent agents collaborate to transform complex problems into executable solutions

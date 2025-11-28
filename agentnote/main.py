@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-AgentNote 主程序入口
+AgentNote 主程序入口 - OODA循环版本
 """
 
 import os
 import sys
-from agentnote.agents.note_agent import NoteAgent
+from agentnote.agents.commander_agent import CommanderAgent
 from agentnote.utils.config_loader import load_config_from_yaml
 
 def main():
@@ -19,10 +19,10 @@ def main():
         print("错误: 需要提供DeepSeek API密钥")
         return
     
-    # 创建智能体
-    agent = NoteAgent(api_key)
+    # 创建指挥官智能体
+    commander = CommanderAgent(api_key)
     
-    print("=== AgentNote 智能体系统 ===")
+    print("=== AgentNote OODA智能体系统 ===")
     print("输入 'quit' 或 'exit' 退出程序")
     print("输入 'status' 查看当前状态")
     print("输入 'help' 查看帮助")
@@ -36,7 +36,7 @@ def main():
                 print("再见!")
                 break
             elif user_input.lower() == 'status':
-                status = agent.get_status()
+                status = commander.get_status()
                 print(f"当前状态: {status}")
                 continue
             elif user_input.lower() == 'help':
@@ -46,7 +46,7 @@ def main():
                 continue
             
             # 执行任务
-            success = agent.run_task(user_input)
+            success = commander.execute_mission(user_input)
             
             if success:
                 print("✅ 任务执行成功!")
@@ -70,6 +70,7 @@ def print_help():
 
 示例任务:
 - "加载和分析本地的test.dot，并用networkx可视化"
+- "分析当前目录下的数据文件并生成报告"
     """
     print(help_text)
 

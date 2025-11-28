@@ -1,11 +1,12 @@
 import time
+import json
+from datetime import datetime
 from openai import OpenAI
 from .config import config
-from datetime import datetime
-import json
 
 class DeepSeekClient:
     """DeepSeek API客户端"""
+    
     def __init__(self, api_key=None):
         self.api_key = api_key or config.deepseek.api_key
         if not self.api_key:
@@ -28,11 +29,8 @@ class DeepSeekClient:
             "error": error
         }
         
-        try:
-            with open(self.log_file, 'a', encoding='utf-8') as f:
-                f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
-        except Exception as e:
-            print(f"日志记录失败: {e}")
+        with open(self.log_file, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
 
     def generate_content(self, system_prompt, user_prompt, model=None, temperature=None):
         """生成内容"""
@@ -47,38 +45,31 @@ class DeepSeekClient:
             "temperature": temperature,
         }
         
-        try:
-            response = self.client.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
-                temperature=temperature,
-                stream=False
-            )
-            
-            response_content = response.choices[0].message.content
-            
-            # 记录成功的API调用
-            response_data = {
-                "content": response_content,
-                "model": response.model,
-                "usage": {
-                    "prompt_tokens": response.usage.prompt_tokens,
-                    "completion_tokens": response.usage.completion_tokens,
-                    "total_tokens": response.usage.total_tokens
-                } if response.usage else None
-            }
-            
-            self._log_api_call(request_data, response_data)
-            return response_content
-            
-        except Exception as e:
-            # 记录失败的API调用
-            self._log_api_call(request_data, None, error=str(e))
-            print(f"DeepSeek API调用失败: {e}")
-            return None
+        response = self.client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=temperature,
+            stream=False
+        )
+        
+        response_content = response.choices[0].message.content
+        
+        # 记录成功的API调用
+        response_data = {
+            "content": response_content,
+            "model": response.model,
+            "usage": {
+                "prompt_tokens": response.usage.prompt_tokens,
+                "completion_tokens": response.usage.completion_tokens,
+                "total_tokens": response.usage.total_tokens
+            } if response.usage else None
+        }
+        
+        self._log_api_call(request_data, response_data)
+        return response_content
 
     def generate_with_retry(self, system_prompt, user_prompt, max_retries=3):
         """带重试的内容生成"""
