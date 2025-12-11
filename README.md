@@ -2,6 +2,8 @@
 
 > **Talk is cheap, show me the notebook.**
 
+[![](./docs/tch-badge.png)](https://zc.tencent.com/competition/competitionHackathon?code=cha004)
+
 ## 🧠 Core Philosophy
 
 AgentNote implements OODA (Observe-Orient-Decide-Act) loop-driven autonomous agents for iterative problem solving in computational notebook environments. By orchestrating specialized AI agents through cognitive decision-making cycles, AgentNote enables autonomous exploration, analysis, and solution generation while automatically documenting the entire process in executable notebooks.
@@ -68,9 +70,9 @@ The shared memory system that maintains state across all execution levels based 
 ## ⚠️ Safety & Considerations
 Important Security Notice: AgentNote executes AI-generated code in your local environment. Please exercise caution:
 
-🔒 Code Execution: Generated code runs with your user permissions
-🔍 Code Review: Always review generated code before execution in production
-🛡️ Environment Isolation: Recommended to use virtual environments or containers
+🔒 Code Execution: Generated code runs with your user permissions  
+🔍 Code Review: Always review generated code before execution in production  
+🛡️ Environment Isolation: Recommended to use virtual environments or containers  
 
 ## 📖 Citation
 Our paper is coming Soon and we're working hard to bring you the full details!
