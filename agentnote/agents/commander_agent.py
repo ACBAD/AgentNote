@@ -10,7 +10,7 @@ from ..core.output import Output, OutputType
 class CommanderAgent(BaseAgent, PhaseEvaluator, CircleEvaluator):
     """指挥官智能体"""
     
-    def __init__(self, api_key: str, notebook_manager=None):  # 修复：添加notebook_manager参数
+    def __init__(self, api_key: str, notebook_manager: Optional[NotebookManager] = None):  # 修复：添加notebook_manager参数
         super().__init__(api_key, "commander", notebook_manager)  # 修复：传递notebook_manager给基类
         self.current_circle = None
         self.mission_history = []

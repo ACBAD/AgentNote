@@ -10,7 +10,7 @@ from ..core.output import Output, OutputType
 class BaseAgent(ABC):
     """基础智能体类"""
     
-    def __init__(self, api_key: str, agent_type: str, notebook_manager: NotebookManager = None):
+    def __init__(self, api_key: str, agent_type: str, notebook_manager: Optional[NotebookManager] = None):
         self.agent_type = agent_type
         self.client = DeepSeekClient(api_key)
         self.parser = ContentParser()
