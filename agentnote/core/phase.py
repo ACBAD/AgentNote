@@ -9,6 +9,9 @@ from ..agents.observe_agent import ObserveAgent
 from ..agents.orient_agent import OrientAgent
 from ..agents.decision_agent import DecisionAgent
 from ..agents.action_agent import ActionAgent
+from ..utils.setup_logger import get_logger
+
+logger = get_logger('Phase')
 
 class PhaseType(Enum):
     OBSERVE = "observe"
@@ -54,7 +57,7 @@ class Phase:
     
     def execute(self, notebook):
         """执行阶段 - 修复返回逻辑"""
-        print(f"执行 {self.phase_type.value} 阶段")
+        logger.info(f"执行 {self.phase_type.value} 阶段")
         
         # 添加阶段标题
         phase_titles = {
@@ -87,7 +90,7 @@ class Phase:
             task_success, notebook = task.execute(notebook)  # 接收更新后的notebook
             
             if not task_success:
-                print(f"指挥官任务失败，重试 {attempt + 1}/{max_retries}")
+                logger.warning(f"指挥官任务失败，重试 {attempt + 1}/{max_retries}")
                 continue
             
             # 关键修改：获取指挥官生成的任务描述，用于后续的智能体任务
@@ -98,7 +101,7 @@ class Phase:
             agent_success, notebook = agent_task.execute(notebook)  # 接收更新后的notebook
             
             if not agent_success:
-                print(f"智能体任务失败，重试 {attempt + 1}/{max_retries}")
+                logger.warning(f"智能体任务失败，重试 {attempt + 1}/{max_retries}")
                 continue
             
             # 3. 指挥官反思任务
@@ -106,7 +109,7 @@ class Phase:
             reflection_success, notebook = reflection_task.execute(notebook)  # 接收更新后的notebook
             
             if not reflection_success:
-                print(f"反思任务失败，重试 {attempt + 1}/{max_retries}")
+                logger.warning(f"反思任务失败，重试 {attempt + 1}/{max_retries}")
                 continue
             
             # 收集该阶段的所有cell内容作为上下文
@@ -131,14 +134,14 @@ class Phase:
             )
             
             if phase_success:
-                print(f"✅ {self.phase_type.value} 阶段执行成功")
+                logger.info(f"✅ {self.phase_type.value} 阶段执行成功")
                 self.success = True
                 self.completed = True
                 return True, notebook
             else:
-                print(f"🔄 {self.phase_type.value} 阶段未完成，重试 {attempt + 1}/{max_retries}")
+                logger.warning(f"🔄 {self.phase_type.value} 阶段未完成，重试 {attempt + 1}/{max_retries}")
         
-        print(f"❌ {self.phase_type.value} 阶段执行失败")
+        logger.warning(f"❌ {self.phase_type.value} 阶段执行失败")
         return False, notebook
 
     def _extract_commander_task_description(self, commander_task):

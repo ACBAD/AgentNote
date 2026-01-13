@@ -3,6 +3,9 @@ import json
 from datetime import datetime
 from openai import OpenAI
 from .config import config
+from ..utils.setup_logger import get_logger
+
+logger = get_logger('DeepseekClient')
 
 class DeepSeekClient:
     """DeepSeek API客户端"""
@@ -77,6 +80,6 @@ class DeepSeekClient:
             content = self.generate_content(system_prompt, user_prompt)
             if content:
                 return content
-            print(f"生成失败，第 {attempt + 1} 次重试...")
+            logger.error(f"生成失败，第 {attempt + 1} 次重试...")
             time.sleep(2)
         return None

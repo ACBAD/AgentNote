@@ -19,3 +19,7 @@ build/
 environment/
 deepseek_api_log.jsonl
 AgentNote-test.ipynb
+venv/
+prompt.md
+/temp
+*.log

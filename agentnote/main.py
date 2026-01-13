@@ -7,6 +7,9 @@ import os
 import sys
 from agentnote.agents.commander_agent import CommanderAgent
 from agentnote.utils.config_loader import load_config_from_yaml
+from utils.setup_logger import get_logger
+
+logger = get_logger('Main')
 
 def main():
     """主函数"""
@@ -16,7 +19,7 @@ def main():
     # 检查API密钥
     api_key = os.getenv('DEEPSEEK_API_KEY') or input("请输入DeepSeek API密钥: ")
     if not api_key:
-        print("错误: 需要提供DeepSeek API密钥")
+        logger.error("需要提供DeepSeek API密钥")
         return
     
     # 创建指挥官智能体
@@ -57,7 +60,7 @@ def main():
             print("\n\n程序被用户中断")
             break
         except Exception as e:
-            print(f"发生错误: {e}")
+            logger.exception(f"发生错误:", exc_info=e)
 
 def print_help():
     """打印帮助信息"""

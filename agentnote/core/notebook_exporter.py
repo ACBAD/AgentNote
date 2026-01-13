@@ -3,6 +3,9 @@ import os
 from datetime import datetime
 import nbformat as nbf
 from .config import config
+from ..utils.setup_logger import get_logger
+
+logger = get_logger('NotebookExporter')
 
 class NotebookExporter:
     """Notebook导出器"""
@@ -55,7 +58,7 @@ class NotebookExporter:
     def export_notebook_to_json(notebook_path: str, output_file: str = None):
         """导出notebook的所有cell输入输出到JSON"""
         if not os.path.exists(notebook_path):
-            print(f"Notebook文件不存在: {notebook_path}")
+            logger.warning(f"Notebook文件不存在: {notebook_path}")
             return None
         
         with open(notebook_path, 'r', encoding='utf-8') as f:
@@ -76,7 +79,7 @@ class NotebookExporter:
         if output_file:
             with open(f"environment/{output_file}", 'w', encoding='utf-8') as f:
                 json.dump(notebook_data, f, indent=2, ensure_ascii=False)
-            print(f"Notebook cell数据已导出到: environment/{output_file}")
+            logger.info(f"Notebook cell数据已导出到: environment/{output_file}")
         
         return notebook_data
         
@@ -91,8 +94,8 @@ class NotebookExporter:
                 nbf.write(nb, f)
                 f.flush()
                 os.fsync(f.fileno())  # 强制刷新到磁盘
-            print(f"Notebook已保存: {full_path}")
+            logger.info(f"Notebook已保存: {full_path}")
             return True
         except Exception as e:
-            print(f"保存notebook失败: {e}")
+            logger.warning(f"保存notebook失败: {e}")
             return False

@@ -6,6 +6,9 @@ from ..core.context import Context
 from ..core.notebook_manager import NotebookManager
 from ..core.evaluator import PhaseEvaluator, CircleEvaluator 
 from ..core.output import Output, OutputType
+from ..utils.setup_logger import get_logger
+
+logger = get_logger('CommanderAgent')
 
 class CommanderAgent(BaseAgent, PhaseEvaluator, CircleEvaluator):
     """指挥官智能体"""
@@ -17,7 +20,7 @@ class CommanderAgent(BaseAgent, PhaseEvaluator, CircleEvaluator):
     
     def execute_mission(self, mission_description: str) -> bool:
         """执行任务"""
-        print(f"开始执行任务: {mission_description}")
+        logger.info(f"开始执行任务: {mission_description}")
         
         # 初始化上下文
         context = Context()
@@ -109,3 +112,48 @@ class CommanderAgent(BaseAgent, PhaseEvaluator, CircleEvaluator):
             'total_missions': len(self.mission_history),
             'successful_missions': len([m for m in self.mission_history if m['success']])
         }
+        
+    def _parse_evaluation_result(self, response: str) -> bool:
+        """
+        解析评估器返回的详细文本。
+        逻辑：
+        1. 打印完整的分析过程（关键调试信息）。
+        2. 重点检查输出的【最后一行】。
+        3. 采用“否定优先”策略，防止误判（例如“未成功”不应被判定为“成功”）。
+        """
+        if not response:
+            return False
+            
+        # 1. 显式打印评估器的思考过程，彻底解决"死得不明不白"的问题
+        logger.debug(f"\n{'='*20} 评估器分析报告 {'='*20}")
+        logger.debug(response.strip())
+        logger.debug(f"{'='*56}\n")
+        
+        # 2. 提取最后一行有效文本
+        lines = [line.strip() for line in response.strip().split('\n') if line.strip()]
+        if not lines:
+            return False
+            
+        # 取最后一行并转小写
+        last_line = lines[-1].lower()
+        
+        # 3. 判定逻辑
+        
+        # A. 否定词优先判定 (只要最后一行包含这些词，直接判否)
+        negative_keywords = ['否', '未', '不', '失败', 'no', 'false', 'fail', 'not']
+        if any(neg in last_line for neg in negative_keywords):
+            return False
+            
+        # B. 肯定词判定
+        positive_keywords = ['是', '成功', '完成', '达成', '通过', 'yes', 'true', 'ok', 'pass']
+        if any(pos in last_line for pos in positive_keywords):
+            return True
+            
+        # C. 兜底逻辑：如果最后一行既没说行也没说不行（格式乱了），
+        # 尝试倒数第二行（有时候模型最后会加一句废话）
+        if len(lines) > 1:
+            prev_line = lines[-2].lower()
+            if any(pos in prev_line for pos in positive_keywords) and not any(neg in prev_line for neg in negative_keywords):
+                return True
+                
+        return False

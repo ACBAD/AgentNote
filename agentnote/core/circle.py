@@ -4,6 +4,9 @@ from .phase import Phase, PhaseType
 from .context import Context
 from .notebook_manager import NotebookManager
 from .evaluator import PhaseEvaluator, CircleEvaluator
+from ..utils.setup_logger import get_logger
+
+logger = get_logger('Circle')
 
 class Circle:
     """OODA循环"""
@@ -35,7 +38,7 @@ class Circle:
         max_circles = 5
         
         for circle_num in range(max_circles):
-            print(f"\n=== 开始OODA循环 {circle_num + 1} ===")
+            logger.info(f"\n=== 开始OODA循环 {circle_num + 1} ===")
             
             # 记录循环开始的cell索引
             start_cell_index = len(self.nb.cells)
@@ -82,12 +85,12 @@ class Circle:
             )
             
             if circle_success:
-                print(f"✅ OODA循环 {circle_num + 1} 执行成功")
+                logger.info(f"OODA循环 {circle_num + 1} 执行成功")
                 self.success = True
                 self.completed = True
                 break  # 这里已经正确跳出循环
             else:
-                print(f"🔄 OODA循环 {circle_num + 1} 未完成目标，准备下一循环")
+                logger.warning(f"🔄 OODA循环 {circle_num + 1} 未完成目标，准备下一循环")
                 # 更新上下文，为下一循环做准备
                 self.context.update({
                     'previous_circle': circle_num + 1,

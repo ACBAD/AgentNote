@@ -6,6 +6,9 @@ from .output import Output, OutputType
 from ..agents.base_agent import BaseAgent
 from ..core.evaluator import PhaseEvaluator
 from ..core.output import Output, OutputType
+from ..utils.setup_logger import get_logger
+
+logger = get_logger('Task')
 
 class TaskType(Enum):
     COMMANDER_TASK = "commander_task"
@@ -101,7 +104,7 @@ class Task:
     
     def execute(self, notebook):
         """执行任务 - 修复返回逻辑"""
-        print(f"执行 {self.task_type.value}: {self.description}")
+        logger.info(f"执行 {self.task_type.value}: {self.description}")
         
         # 记录任务开始的cell索引
         start_cell_index = len(notebook.cells)
@@ -142,7 +145,7 @@ class Task:
                         previous_outputs
                     )
                     self.context.update(retry_context)
-                    print(f"🔄 第 {attempt + 1} 次重试，使用错误上下文: {retry_context}")
+                    logger.warning(f"🔄 第 {attempt + 1} 次重试，使用错误上下文: {retry_context}")
                 
                 # 执行任务（只有真正的智能体才有 execute_task 方法）
                 outputs = self.agent.execute_task(self.description, self.context.get_all())
@@ -196,15 +199,15 @@ class Task:
                     # 记录执行错误
                     error_msg = f"代码执行错误 (尝试 {attempt + 1}): {execution_error_details}"
                     self.execution_history.append(error_msg)
-                    print(f"❌ {error_msg}")
+                    logger.warning(error_msg)
                     
                     if attempt < max_retries - 1:
-                        print(f"🔄 准备重试 ({attempt + 1}/{max_retries})")
+                        logger.warning(f"🔄 准备重试 ({attempt + 1}/{max_retries})")
                         self.error_count += 1
                         continue
                     else:
                         # 最后一次尝试也失败了
-                        print(f"❌ 达到最大重试次数，任务失败")
+                        logger.error(f"❌ 达到最大重试次数，任务失败")
                         self.success = False
                         self.completed = True
                         return False, notebook
@@ -224,7 +227,7 @@ class Task:
                 
                 self.success = True
                 self.completed = True
-                print(f"✅ 任务执行成功 (尝试 {attempt + 1})")
+                logger.info(f"✅ 任务执行成功 (尝试 {attempt + 1})")
                 return True, notebook
                 
             except Exception as e:
@@ -241,15 +244,15 @@ class Task:
                         'attempt': attempt + 1
                     }
                 )
-                print(f"❌ {error_msg}")
+                logger.warning(error_msg)
                 
                 self.error_count += 1
                 
                 if attempt < max_retries - 1:
-                    print(f"🔄 准备重试 ({attempt + 1}/{max_retries})")
+                    logger.warning(f"🔄 准备重试 ({attempt + 1}/{max_retries})")
                     continue
                 else:
-                    print(f"❌ 达到最大重试次数，任务失败")
+                    logger.error(f"❌ 达到最大重试次数，任务失败")
                     self.success = False
                     self.completed = True
                     return False, notebook

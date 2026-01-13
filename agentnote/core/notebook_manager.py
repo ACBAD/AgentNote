@@ -5,6 +5,9 @@ from typing import Dict, Any
 from .config import config
 from .notebook_exporter import NotebookExporter
 from .executor import NotebookExecutor
+from ..utils.setup_logger import get_logger
+
+logger = get_logger('NotebookManager')
 
 class NotebookManager:
     """Notebook管理器"""
@@ -39,11 +42,11 @@ class NotebookManager:
             # 添加初始标记
             initial_markdown = f"# OODA循环生成的 Notebook\n\n创建时间: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n---\n"
             self.add_markdown_cell(nb, initial_markdown)
-            print(f"创建新的Notebook: {self.notebook_path}")
+            logger.info(f"创建新的Notebook: {self.notebook_path}")
         else:
             # 加载现有notebook
             nb = self.load_notebook()
-            print(f"加载现有Notebook: {self.notebook_path}")
+            logger.info(f"加载现有Notebook: {self.notebook_path}")
         
         self._notebook_initialized = True
         return nb
@@ -99,7 +102,7 @@ class NotebookManager:
         # 只保留最近的cell
         nb.cells = nb.cells[-config.notebook.max_cells:]
         self.save_notebook(nb)
-        print(f"已清理cell，当前数量: {len(nb.cells)}")
+        logger.info(f"已清理cell，当前数量: {len(nb.cells)}")
         return nb
     
     def execute_cell_safely(self, executor, code: str, cell_index: int) -> Dict[str, Any]:
