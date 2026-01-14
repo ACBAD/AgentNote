@@ -55,14 +55,17 @@ class DeepSeekClient:
                 {"role": "user", "content": user_prompt},
             ],
             temperature=temperature,
-            stream=False
+            stream=False,
+            extra_body={"thinking": {"type": "enabled"}}
         )
         
         response_content = response.choices[0].message.content
+        reasoning_content = response.choices[0].message.reasoning_content # type: ignore
         
         # 记录成功的API调用
         response_data = {
             "content": response_content,
+            'think': reasoning_content,
             "model": response.model,
             "usage": {
                 "prompt_tokens": response.usage.prompt_tokens,
