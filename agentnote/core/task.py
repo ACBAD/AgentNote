@@ -104,7 +104,10 @@ class Task:
     
     def execute(self, notebook):
         """执行任务 - 修复返回逻辑"""
-        logger.info(f"执行 {self.task_type.value}: {self.description}")
+        logger.info(f"执行 {self.task_type.value}")
+        logger.debug('='*20 + '详细task内容' + '='*20)
+        logger.debug(self.description)
+        logger.debug('='*54)
         
         # 记录任务开始的cell索引
         start_cell_index = len(notebook.cells)

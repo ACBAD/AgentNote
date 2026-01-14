@@ -8,7 +8,7 @@ from ..core.evaluator import PhaseEvaluator, CircleEvaluator
 from ..core.output import Output, OutputType
 from ..utils.setup_logger import get_logger
 
-logger = get_logger('CommanderAgent')
+logger = get_logger('CommanderAgent', debug=True)
 
 class CommanderAgent(BaseAgent, PhaseEvaluator, CircleEvaluator):
     """指挥官智能体"""
@@ -20,7 +20,7 @@ class CommanderAgent(BaseAgent, PhaseEvaluator, CircleEvaluator):
     
     def execute_mission(self, mission_description: str) -> bool:
         """执行任务"""
-        logger.info(f"开始执行任务: {mission_description}")
+        logger.info(f"开始执行任务")
         
         # 初始化上下文
         context = Context()
@@ -43,8 +43,6 @@ class CommanderAgent(BaseAgent, PhaseEvaluator, CircleEvaluator):
     
     # PhaseEvaluator 接口实现 - 修改：增加goal和cell_context参数
     def evaluate_phase_success(self, phase_type: str, context: Dict[str, Any], goal: str, cell_context: str) -> bool:
-        """评估阶段是否成功 - 基于goal和cell_context"""
-
         system_prompt = self._get_prompt('system_prompts', 'phase_evaluator')
         user_prompt = self._get_prompt('evaluation_prompts', 'phase_success',
                                      phase_type=phase_type,
@@ -53,11 +51,7 @@ class CommanderAgent(BaseAgent, PhaseEvaluator, CircleEvaluator):
                                      context=str(context))
         
         response = self.generate_response(system_prompt, user_prompt)
-        
-        # 解析响应，假设响应包含"是"或"成功"等肯定词表示成功
-        if response and any(keyword in response.lower() for keyword in ['是', '成功', '完成', '可以', '通过', '达成目标']):
-            return True
-        return False
+        return self._parse_evaluation_result(response)
     
     # CircleEvaluator 接口实现 - 修改：增加goal和cell_context参数
     def evaluate_circle_success(self, context: Dict[str, Any], goal: str, cell_context: str) -> bool:
@@ -71,10 +65,7 @@ class CommanderAgent(BaseAgent, PhaseEvaluator, CircleEvaluator):
         
         response = self.generate_response(system_prompt, user_prompt)
         
-        # 解析响应
-        if response and any(keyword in response.lower() for keyword in ['是', '成功', '完成', '达成', '目标实现']):
-            return True
-        return False
+        return self._parse_evaluation_result(response)
     
     def execute_task(self, task_description: str, context: Dict[str, Any]) -> List[Output]:
         """执行指挥官任务"""
