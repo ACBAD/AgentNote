@@ -6,13 +6,14 @@ from ..core.deepseek_client import DeepSeekClient
 from ..core.content_parser import ContentParser
 from ..core.notebook_manager import NotebookManager
 from ..core.output import Output, OutputType
+from ..core.config import config
 
 class BaseAgent(ABC):
     """基础智能体类"""
     
     def __init__(self, api_key: str, agent_type: str, notebook_manager: Optional[NotebookManager] = None):
         self.agent_type = agent_type
-        self.client = DeepSeekClient(api_key)
+        self.client = DeepSeekClient(api_key, enable_thinking=config.deepseek.think_mode)
         self.parser = ContentParser()
         self.manager = notebook_manager if notebook_manager else NotebookManager()
         self.prompts = self._load_prompts()
