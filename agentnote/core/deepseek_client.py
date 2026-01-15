@@ -5,7 +5,7 @@ from openai import OpenAI
 from .config import config
 from ..utils.setup_logger import get_logger
 
-logger = get_logger('DeepseekClient')
+logger = get_logger('DeepseekClient', debug=True)
 
 class DeepSeekClient:
     """DeepSeek API客户端"""

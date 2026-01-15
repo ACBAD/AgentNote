@@ -1,5 +1,5 @@
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, Any
 
 @dataclass
@@ -27,6 +27,7 @@ class DeepSeekConfig:
     temperature: float = 0.7
     max_tokens: int = 4000
     think_mode: bool = False
+    debug: bool = False
 
 @dataclass
 class AgentConfig:
@@ -34,6 +35,7 @@ class AgentConfig:
     retry_delay: int = 2
     enable_auto_fix: bool = True
     enable_execution: bool = True
+    commander_debug: bool = False
 
 @dataclass
 class OODAConfig:
@@ -46,10 +48,10 @@ class OODAConfig:
 
 @dataclass
 class Config:
-    notebook: NotebookConfig = NotebookConfig()
-    deepseek: DeepSeekConfig = DeepSeekConfig()
-    agent: AgentConfig = AgentConfig()
-    ooda: OODAConfig = OODAConfig()
+    notebook: NotebookConfig = field(default_factory=NotebookConfig)
+    deepseek: DeepSeekConfig = field(default_factory=DeepSeekConfig)
+    agent: AgentConfig = field(default_factory=AgentConfig)
+    ooda: OODAConfig = field(default_factory=OODAConfig)
     
     def update_from_dict(self, config_dict: Dict[str, Any]):
         """从字典更新配置"""

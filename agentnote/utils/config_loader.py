@@ -16,6 +16,10 @@ def load_config_from_yaml(file_path: str = "config.yaml"):
     # 如果文件不存在，尝试在脚本同目录查找
     if not config_path.exists():
         config_path = Path(__file__).parent / file_path
+        
+    #如果还不存在, 去environment下找
+    if not config_path.exists():
+        config_path = Path('environment') / file_path
     
     logger.info(f"查找配置文件: {config_path.absolute()}")
     
