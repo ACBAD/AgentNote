@@ -10,7 +10,7 @@ logger = get_logger('DeepseekClient')
 class DeepSeekClient:
     """DeepSeek API客户端"""
     
-    def __init__(self, api_key=None):
+    def __init__(self, api_key=None, enable_thinking=False):
         self.api_key = api_key or config.deepseek.api_key
         if not self.api_key:
             raise ValueError("DeepSeek API密钥未提供")
@@ -19,7 +19,9 @@ class DeepSeekClient:
             api_key=self.api_key,
             base_url=config.deepseek.base_url
         )
-        
+        if enable_thinking:
+            logger.debug('已启用思考模型')
+        self.enable_thinking = enable_thinking
         # 初始化日志
         self.log_file = "deepseek_api_log.jsonl"
 
@@ -56,11 +58,14 @@ class DeepSeekClient:
             ],
             temperature=temperature,
             stream=False,
-            extra_body={"thinking": {"type": "enabled"}}
+            extra_body={"thinking": {"type": "enabled"}} if self.enable_thinking else None
         )
         
         response_content = response.choices[0].message.content
-        reasoning_content = response.choices[0].message.reasoning_content # type: ignore
+        if self.enable_thinking:
+            reasoning_content = response.choices[0].message.reasoning_content # type: ignore
+        else:
+            reasoning_content = None
         
         # 记录成功的API调用
         response_data = {
