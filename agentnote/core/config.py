@@ -26,6 +26,7 @@ class DeepSeekConfig:
     model: str = "deepseek-chat"
     temperature: float = 0.7
     max_tokens: int = 4000
+    think_mode: bool = False
 
 @dataclass
 class AgentConfig:
@@ -43,12 +44,12 @@ class OODAConfig:
     enable_phase_reflection: bool = True
     enable_task_reflection: bool = True
 
+@dataclass
 class Config:
-    def __init__(self):
-        self.notebook = NotebookConfig()
-        self.deepseek = DeepSeekConfig()
-        self.agent = AgentConfig()
-        self.ooda = OODAConfig()
+    notebook: NotebookConfig = NotebookConfig()
+    deepseek: DeepSeekConfig = DeepSeekConfig()
+    agent: AgentConfig = AgentConfig()
+    ooda: OODAConfig = OODAConfig()
     
     def update_from_dict(self, config_dict: Dict[str, Any]):
         """从字典更新配置"""

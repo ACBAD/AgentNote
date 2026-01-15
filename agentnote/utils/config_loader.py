@@ -4,6 +4,7 @@ from typing import Dict, Any
 from ..core.config import config
 from ..utils.setup_logger import get_logger
 from pathlib import Path
+from dataclasses import asdict
 
 logger = get_logger('ConfigLoader')
 
@@ -30,46 +31,8 @@ def load_config_from_yaml(file_path: str = "config.yaml"):
 
 def save_config_to_yaml(file_path: str = "config.yaml"):
     """保存配置到YAML文件"""
-    config_data = {
-        'notebook': {
-            'update_mode': config.notebook.update_mode,
-            'notebook_name': config.notebook.notebook_name,
-            'code_cell_tag': config.notebook.code_cell_tag,
-            'markdown_cell_tag': config.notebook.markdown_cell_tag,
-            'max_cells': config.notebook.max_cells,
-            'sleep_interval': config.notebook.sleep_interval,
-            'export_json': config.notebook.export_json,
-            'json_output_file': config.notebook.json_output_file,
-            'context_max_cells': config.notebook.context_max_cells,
-            'include_code_in_context': config.notebook.include_code_in_context,
-            'include_markdown_in_context': config.notebook.include_markdown_in_context,
-            'include_outputs_in_context': config.notebook.include_outputs_in_context,
-            'add_timestamp': config.notebook.add_timestamp,
-        },
-        'deepseek': {
-            'api_key': config.deepseek.api_key,
-            'base_url': config.deepseek.base_url,
-            'model': config.deepseek.model,
-            'temperature': config.deepseek.temperature,
-            'max_tokens': config.deepseek.max_tokens,
-        },
-        'agent': {
-            'max_retries': config.agent.max_retries,
-            'retry_delay': config.agent.retry_delay,
-            'enable_auto_fix': config.agent.enable_auto_fix,
-            'enable_execution': config.agent.enable_execution,
-        },
-        'ooda': {
-            'max_circles': config.ooda.max_circles,
-            'max_phase_retries': config.ooda.max_phase_retries,
-            'max_task_retries': config.ooda.max_task_retries,
-            'enable_circle_reflection': config.ooda.enable_circle_reflection,
-            'enable_phase_reflection': config.ooda.enable_phase_reflection,
-            'enable_task_reflection': config.ooda.enable_task_reflection,
-        }
-    }
     
     with open(file_path, 'w', encoding='utf-8') as f:
-        yaml.dump(config_data, f, default_flow_style=False, allow_unicode=True, indent=2)
+        yaml.dump(asdict(config), f, default_flow_style=False, allow_unicode=True, indent=2)
     
     logger.info(f"配置已保存到: {file_path}")
