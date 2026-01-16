@@ -11,7 +11,12 @@ logger = get_logger('Circle')
 class Circle:
     """OODA循环"""
     
-    def __init__(self, mission: str, context: Context, deepseek_client, circle_evaluator: CircleEvaluator, phase_evaluator: PhaseEvaluator):
+    def __init__(self, 
+                 mission: str, 
+                 context: Context, 
+                 deepseek_client, 
+                 circle_evaluator: CircleEvaluator, 
+                 phase_evaluator: PhaseEvaluator,):
         self.mission = mission
         self.context = context
         self.client = deepseek_client
@@ -78,11 +83,13 @@ class Circle:
             self.context.set_circle_context(circle_num + 1, circle_context)
             
             # 评估循环是否成功 - 使用注入的评估器，并传入goal和context
-            circle_success = self.circle_evaluator.evaluate_circle_success(
+            circle_success, evaluate_response = self.circle_evaluator.evaluate_circle_success(
                 self.context.get_all(),  # 现在包含完整的上下文信息
                 self.goal,
                 self.cell_context
             )
+            
+            self.manager.add_markdown_cell(self.nb, evaluate_response + "\n---\n## 循环评估结果: " + '成功' if circle_success else '失败')
             
             if circle_success:
                 logger.info(f"OODA循环 {circle_num + 1} 执行成功")

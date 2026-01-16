@@ -42,7 +42,7 @@ class CommanderAgent(BaseAgent, PhaseEvaluator, CircleEvaluator):
         return success
     
     # PhaseEvaluator 接口实现 - 修改：增加goal和cell_context参数
-    def evaluate_phase_success(self, phase_type: str, context: Dict[str, Any], goal: str, cell_context: str) -> bool:
+    def evaluate_phase_success(self, phase_type: str, context: Dict[str, Any], goal: str, cell_context: str) -> tuple[bool, str]:
         system_prompt = self._get_prompt('system_prompts', 'phase_evaluator')
         user_prompt = self._get_prompt('evaluation_prompts', 'phase_success',
                                      phase_type=phase_type,
@@ -51,10 +51,10 @@ class CommanderAgent(BaseAgent, PhaseEvaluator, CircleEvaluator):
                                      context=str(context))
         
         response = self.generate_response(system_prompt, user_prompt)
-        return self._parse_evaluation_result(response)
+        return self._parse_evaluation_result(response), response
     
     # CircleEvaluator 接口实现 - 修改：增加goal和cell_context参数
-    def evaluate_circle_success(self, context: Dict[str, Any], goal: str, cell_context: str) -> bool:
+    def evaluate_circle_success(self, context: Dict[str, Any], goal: str, cell_context: str) -> tuple[bool, str]:
         """评估循环是否成功 - 基于goal和cell_context"""
 
         system_prompt = self._get_prompt('system_prompts', 'circle_evaluator')
@@ -65,7 +65,7 @@ class CommanderAgent(BaseAgent, PhaseEvaluator, CircleEvaluator):
         
         response = self.generate_response(system_prompt, user_prompt)
         
-        return self._parse_evaluation_result(response)
+        return self._parse_evaluation_result(response), response
     
     def execute_task(self, task_description: str, context: Dict[str, Any]) -> List[Output]:
         """执行指挥官任务"""

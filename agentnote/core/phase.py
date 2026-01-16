@@ -22,7 +22,12 @@ class PhaseType(Enum):
 class Phase:
     """OODA阶段"""
     
-    def __init__(self, phase_type: PhaseType, context: Context, deepseek_client, phase_evaluator: PhaseEvaluator, notebook_manager):
+    def __init__(self, 
+                 phase_type: PhaseType, 
+                 context: Context, 
+                 deepseek_client, 
+                 phase_evaluator: PhaseEvaluator, 
+                 notebook_manager):
         self.phase_type = phase_type
         self.context = context
         self.client = deepseek_client
@@ -40,6 +45,8 @@ class Phase:
             self.agent = DecisionAgent(deepseek_client.api_key, notebook_manager)
         elif phase_type == PhaseType.ACTION:
             self.agent = ActionAgent(deepseek_client.api_key, notebook_manager)
+        else:
+            raise TypeError('不存在此类型的agent')
         
         self.tasks = []
         self.completed = False
@@ -86,7 +93,7 @@ class Phase:
         for attempt in range(max_retries):
             # 1. 指挥官生成任务
             task_description = self._generate_task_description()
-            task = Task(TaskType.COMMANDER_TASK, task_description, self.context, self.phase_evaluator, self.goal)
+            task = Task(TaskType.COMMANDER_TASK, task_description, self.context, self.agent, self.goal)
             task_success, notebook = task.execute(notebook)  # 接收更新后的notebook
             
             if not task_success:
@@ -105,7 +112,7 @@ class Phase:
                 continue
             
             # 3. 指挥官反思任务
-            reflection_task = Task(TaskType.REFLECTION_TASK, commander_generated_description, self.context, self.phase_evaluator, self.goal)
+            reflection_task = Task(TaskType.REFLECTION_TASK, commander_generated_description, self.context, self.agent, self.goal)
             reflection_success, notebook = reflection_task.execute(notebook)  # 接收更新后的notebook
             
             if not reflection_success:
@@ -126,7 +133,7 @@ class Phase:
             self.context.set_phase_context(self.phase_type.value, phase_context)
             
             # 评估阶段是否成功 - 使用注入的评估器，并传入goal和context
-            phase_success = self.phase_evaluator.evaluate_phase_success(
+            phase_success, evaluate_response = self.phase_evaluator.evaluate_phase_success(
                 self.phase_type.value, 
                 self.context.get_all(),  # 现在包含完整的上下文信息
                 self.goal,
@@ -140,6 +147,8 @@ class Phase:
                 return True, notebook
             else:
                 logger.warning(f"🔄 {self.phase_type.value} 阶段未完成，重试 {attempt + 1}/{max_retries}")
+                
+            notebook_manager.add_markdown_cell(notebook, evaluate_response + "\n---\n## 阶段评估结果: " + '成功' if phase_success else '失败')
         
         logger.warning(f"❌ {self.phase_type.value} 阶段执行失败")
         return False, notebook
